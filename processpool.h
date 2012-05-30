@@ -24,7 +24,11 @@ class OSProcess {
     public:
         OSProcess();
         ~OSProcess();
+        
+        std::string WaitForChildMessage();
+        void SendMessageToChild(const std::string &msg);
     private:
+    
         HANDLE read_pipe_;
         HANDLE write_pipe_;
         PROCESS_INFORMATION process_info_;

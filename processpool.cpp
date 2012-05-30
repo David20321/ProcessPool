@@ -62,7 +62,9 @@ ProcessHandle::ProcessHandle()
 {}
 
 void ProcessHandle::Process( const std::string& task ) {
-
+    os_process_.SendMessageToChild(task);
+    std::cout << os_process_.WaitForChildMessage() << std::endl;
+    idle_ = false;
 }
 
 #ifdef _WIN32
@@ -86,6 +88,52 @@ namespace {
     }
 }
 
+namespace {
+void ReadMessageFromPipe(const HANDLE &pipe_handle, std::string *msg){
+    DWORD dwRead, dwWritten; 
+    CHAR chBuf[kPipeBufSize]; 
+    BOOL bSuccess = FALSE;
+    std::string &message = *msg;
+    message.clear();
+
+    int offset = 0;
+    bool continue_reading = true;
+    while(continue_reading){
+        if(!ReadFile( pipe_handle, chBuf, kPipeBufSize-1, &dwRead, NULL)){
+            ErrorExit("Error reading from interprocess pipe");
+        }
+        for(int i=0; i<(int)dwRead; ++i){
+            if(chBuf[i] == '\0'){
+                continue_reading = false;
+            }
+        }
+        chBuf[dwRead] = '\0';
+        message += chBuf;
+    }
+}
+
+void WriteMessageToPipe(const HANDLE& pipe_handle, const std::string &msg){
+    int msg_length = (int)msg.length();
+    int total_sent = 0;
+    DWORD  num_written;
+    while (total_sent < msg_length){
+        if(!WriteFile(pipe_handle, &msg[0], msg.length(), &num_written, NULL)){
+            ErrorExit("Error writing to interprocess pipe");
+        }
+        total_sent += num_written;
+    }
+    CHAR end_str[] = {'\0'};
+    if(!WriteFile(pipe_handle, end_str, 1, &num_written, NULL) || num_written != 1){
+        ErrorExit("Error writing to interprocess pipe");
+    }
+}
+}
+
+std::string OSProcess::WaitForChildMessage() {
+    std::string msg;
+    ReadMessageFromPipe(read_pipe_, &msg);
+    return msg;
+}
 
 OSProcess::OSProcess() {
     std::cout << "Creating OS Process" << std::endl;
@@ -134,40 +182,42 @@ OSProcess::OSProcess() {
         NULL, NULL, &startup_info,
         &process_info_);
         
-    DWORD dwRead, dwWritten; 
-    CHAR chBuf[kPipeBufSize]; 
-    BOOL bSuccess = FALSE;
-    HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    int offset = 0;
-    bool continue_reading = true;
-    while(continue_reading){
-        bSuccess = ReadFile( read_pipe_, &chBuf[offset], kPipeBufSize, &dwRead, NULL);
-        offset += dwRead;
-        for(int i=0; i<offset; ++i){
-            if(chBuf[i] == '\0'){
-                continue_reading = false;
-            }
-        }
-    }
-    if(!bSuccess || strcmp(chBuf, kChildInitString) != 0){
-        ErrorExit("Problem communicating with child process");
+    if(WaitForChildMessage() != kChildInitString){
+        ErrorExit("Invalid initial acknowledgement from child process");
     }
 }
 
 OSProcess::~OSProcess() {
+    CloseHandle(process_info_.hThread);
+    TerminateProcess(process_info_.hProcess, 0);
+    CloseHandle(process_info_.hProcess);
     CloseHandle(read_pipe_);
     CloseHandle(write_pipe_);
-    CloseHandle(process_info_.hProcess);
-    CloseHandle(process_info_.hThread);
 }
 
+void OSProcess::SendMessageToChild( const std::string &msg ) {
+    WriteMessageToPipe(write_pipe_, msg);
+}
+
+namespace {
+
+void SendMessageToParent(const std::string &msg){
+    WriteMessageToPipe(GetStdHandle(STD_OUTPUT_HANDLE), msg);
+}
+std::string WaitForParentMessage(){
+    std::string msg;
+    ReadMessageFromPipe(GetStdHandle(STD_INPUT_HANDLE), &msg);
+    return msg;
+}
+
+} // namespace ""
+
 int ProcessPool::WorkerProcessMain(JobMap job_map) {
-    CHAR end_str[1];
-    end_str[0] = '\0';
-    DWORD  num_written;
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), kChildInitString, strlen(kChildInitString), &num_written, NULL);
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), end_str, 1, &num_written, NULL);
+    SendMessageToParent(kChildInitString);
+    while(1){
+        std::string msg = WaitForParentMessage();
+        SendMessageToParent("Message acknowledged: "+msg);
+    }
     return 0;
 }
 
