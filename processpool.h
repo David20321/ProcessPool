@@ -1,0 +1,83 @@
+#pragma once
+#ifndef INTERNAL_PROCESS_POOL_H
+#define INTERNAL_PROCESS_POOL_H
+
+#include <string>
+#include <vector>
+#include <queue>
+#include <map>
+
+// From Google Style Guide
+// A macro to disallow the copy constructor and operator= functions
+// This should be used in the private: declarations for a class
+#ifndef DISALLOW_COPY_AND_ASSIGN
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+    TypeName(const TypeName&);               \
+    void operator=(const TypeName&)
+#endif
+
+#ifdef _WIN32
+
+#include <windows.h>
+
+class OSProcess {
+    public:
+        OSProcess();
+        ~OSProcess();
+    private:
+        HANDLE read_pipe_;
+        HANDLE write_pipe_;
+        PROCESS_INFORMATION process_info_;
+    
+        DISALLOW_COPY_AND_ASSIGN(OSProcess);
+};
+
+#endif //_WIN32
+
+class ProcessHandle {
+public:
+    void Process(const std::string& task);
+    inline bool idle(){return idle_;}
+    
+    ProcessHandle();
+   
+private:
+    bool idle_;
+    OSProcess os_process_;
+    
+    void CreateProcess();
+    DISALLOW_COPY_AND_ASSIGN(ProcessHandle);
+};
+
+
+class ProcessPool {
+public:
+    typedef int (*JobFunctionPtr)(int argc, char* argv[]);
+    typedef std::map<std::string, ProcessPool::JobFunctionPtr> JobMap;
+    enum Error{SUCCESS = 0,
+               NO_IDLE_PROCESS = -1,
+               NO_TASK_IN_QUEUE = -2};
+    static bool AmIAWorkerProcess( int argc, char* argv[] );
+    static int WorkerProcessMain(JobMap job_map);
+        
+    void Schedule(const std::string& task);
+    ProcessPool(int size);
+    ~ProcessPool();
+private:
+    // Change number of process handlers
+    void Resize(int _size);
+    
+    // Attempts to start processing the first task in the queue in the first
+    // idle process. Can return SUCCESS, NO_IDLE_PROCESS or NO_TASK_IN_QUEUE. 
+    ProcessPool::Error ProcessFirstTaskInQueue();
+    
+    // Returns index of the first idle process in pool, or -1 if there
+    // are no idle processes
+    int GetIdleProcessIndex();
+    
+    std::vector<ProcessHandle*> processes_;
+    std::queue<std::string> tasks_;
+    DISALLOW_COPY_AND_ASSIGN(ProcessPool);
+};
+
+#endif //INTERNAL_PROCESS_POOL_H
