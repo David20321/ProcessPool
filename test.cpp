@@ -5,8 +5,9 @@
 
 using namespace std;
 
-int CreateFile(int argc, char* argv[]){
+int CreateFile(int argc, const char* argv[]){
     cout << "CreateFile() called with param \"" << argv[0] << "\"" << endl;
+    Sleep(4000);
     return 0;   
 }
 
@@ -18,7 +19,11 @@ int main(int argc, char* argv[]){
     }
     ProcessPool process_pool(4);
     process_pool.Schedule("CreateFile \"the_file.txt\"");
-    std::cout << "Test!" << std::endl;
+    process_pool.Schedule("CreateFile \"the_      file.txt\"");
+    process_pool.Schedule("CreateFile \"the_file.txt\" \"Other file.txt\" param1 param2");
+    process_pool.Schedule("CreateFile \"the_file.txt\" \"Other file.txt\" param1 param2");
+    process_pool.Schedule("CreateFile \"the_file.txt\" \"Other file.txt\" param1 param2");
+    process_pool.Schedule("CreateFile \"the_file.txt\" \"Other file.txt\" param1 param2");
     getchar();
     return 0;
 }

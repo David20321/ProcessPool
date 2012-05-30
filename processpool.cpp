@@ -3,8 +3,17 @@
 
 namespace {
 const char *kWorkerProcessString = "ProcessPool::IAmAWorkerProcess";
-const char *kChildInitString = "Child process reporting for duty";
+const char *kChildInitString = "ACK_INIT: Child process reporting for duty";
 }
+
+#ifdef _WIN32
+namespace {
+    void ErrorExit(const std::string &msg){
+        MessageBox(NULL, msg.c_str(), TEXT("Error"), MB_OK); 
+        ExitProcess(1);
+    }
+}
+#endif
 
 void ProcessPool::Resize( int _size ) {
     int old_size = (int)processes_.size();
@@ -13,14 +22,14 @@ void ProcessPool::Resize( int _size ) {
     }
     processes_.resize(_size, NULL);
     for(int i=old_size; i<_size; ++i){
-        processes_[i] = new ProcessHandle();
+        processes_[i] = new ProcessHandle(this);
     }
 }
 
 int ProcessPool::GetIdleProcessIndex() {
     int num_processes = (int)processes_.size();
     for(int i=0; i<num_processes; ++i){
-        if(!processes_[i]->idle()){
+        if(processes_[i]->idle()){
             return i;
         }   
     }
@@ -57,14 +66,47 @@ void ProcessPool::Schedule( const std::string& task ) {
     ProcessFirstTaskInQueue();
 }
 
-ProcessHandle::ProcessHandle()
-    :idle_(true)
+ProcessHandle::ProcessHandle(ProcessPool* parent_process_pool)
+    :idle_(true), parent_process_pool_(parent_process_pool)
 {}
 
+bool ProcessHandle::ProcessMessageFromChild(const std::string& msg){
+    int divider = (int)msg.find(": ");
+    if(divider == std::string::npos){
+        ErrorExit("No divider in message from child: "+msg);
+    }
+    std::string type = msg.substr(0, divider);
+    std::string body = msg.substr(divider+2, msg.size()-(divider+2));
+    if(type == "PRINT"){
+        std::cout << body << std::endl;
+    }
+    if(type == "STATE"){
+        if(body == "IDLE"){
+            std::cout << "Task complete!" << std::endl;
+            return true;
+        }
+    }
+    return false;
+}
+
+void ProcessHandle::ProcessInBackground( ) {
+    while(!ProcessMessageFromChild(os_process_.WaitForChildMessage())){}
+    idle_ = true;
+    parent_process_pool_->NotifyTaskComplete();
+}
+
+namespace {
+    DWORD WINAPI ThreadFunc(LPVOID process_handle_ptr){
+        ((ProcessHandle*)process_handle_ptr)->ProcessInBackground();
+        return 0;
+    }
+}
+
 void ProcessHandle::Process( const std::string& task ) {
-    os_process_.SendMessageToChild(task);
-    std::cout << os_process_.WaitForChildMessage() << std::endl;
+    os_process_.SendMessageToChild("TASK: "+task);
     idle_ = false;
+    HANDLE thread = CreateThread(NULL, 0, ThreadFunc, this, 0, NULL);
+    CloseHandle(thread);
 }
 
 #ifdef _WIN32
@@ -81,16 +123,11 @@ namespace {
     }
     const int kPathBufferSize = 1024;
     const int kPipeBufSize = 256;
-    
-    void ErrorExit(const char* msg){
-        MessageBox(NULL, msg, TEXT("Error"), MB_OK); 
-        ExitProcess(1);
-    }
 }
 
 namespace {
 void ReadMessageFromPipe(const HANDLE &pipe_handle, std::string *msg){
-    DWORD dwRead, dwWritten; 
+    DWORD dwRead; 
     CHAR chBuf[kPipeBufSize]; 
     BOOL bSuccess = FALSE;
     std::string &message = *msg;
@@ -99,16 +136,14 @@ void ReadMessageFromPipe(const HANDLE &pipe_handle, std::string *msg){
     int offset = 0;
     bool continue_reading = true;
     while(continue_reading){
-        if(!ReadFile( pipe_handle, chBuf, kPipeBufSize-1, &dwRead, NULL)){
-            ErrorExit("Error reading from interprocess pipe");
+        if(!ReadFile( pipe_handle, chBuf, 1, &dwRead, NULL)){
+            ExitProcess(1); // Other process was probably killed
         }
-        for(int i=0; i<(int)dwRead; ++i){
-            if(chBuf[i] == '\0'){
-                continue_reading = false;
-            }
+        if(chBuf[0] == '\0'){
+            continue_reading = false;
+        } else {
+            message += chBuf[0];
         }
-        chBuf[dwRead] = '\0';
-        message += chBuf;
     }
 }
 
@@ -117,14 +152,14 @@ void WriteMessageToPipe(const HANDLE& pipe_handle, const std::string &msg){
     int total_sent = 0;
     DWORD  num_written;
     while (total_sent < msg_length){
-        if(!WriteFile(pipe_handle, &msg[0], msg.length(), &num_written, NULL)){
-            ErrorExit("Error writing to interprocess pipe");
+        if(!WriteFile(pipe_handle, &msg[0], (DWORD)msg.length(), &num_written, NULL)){
+            ExitProcess(1); // Other process was probably killed
         }
         total_sent += num_written;
     }
     CHAR end_str[] = {'\0'};
     if(!WriteFile(pipe_handle, end_str, 1, &num_written, NULL) || num_written != 1){
-        ErrorExit("Error writing to interprocess pipe");
+        ExitProcess(1); // Other process was probably killed
     }
 }
 }
@@ -165,7 +200,7 @@ OSProcess::OSProcess() {
     if(!CreatePipe(&startup_info.hStdInput, &write_pipe_, &inheritable, 0)){
         ErrorExit("Error creating second child process pipe");
     }
-    startup_info.hStdError = startup_info.hStdOutput;
+    startup_info.hStdError = GetStdHandle(STD_OUTPUT_HANDLE);
     
     // Set parent end of pipes to not be inheritable
     if(!SetHandleInformation(read_pipe_, HANDLE_FLAG_INHERIT, 0)){
@@ -210,15 +245,92 @@ std::string WaitForParentMessage(){
     return msg;
 }
 
+int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_map){
+    int divider = (int)msg.find(": ");
+    if(divider == std::string::npos){
+        ErrorExit("No divider in message from parent: "+msg);
+    }
+    std::string type = msg.substr(0, divider);
+    std::string body = msg.substr(divider+2, msg.size()-(divider+2));
+    if(type == "TASK"){
+        SendMessageToParent("PRINT: Starting task \""+body+"\"");
+        int space = (int)body.find(' ');
+        std::string job;
+        std::string params;
+        if(space == std::string::npos){
+            job = body;
+        } else {
+            job = body.substr(0, space);
+            params = body.substr(space + 1, body.size()-(space+1));
+        }
+        ProcessPool::JobMap::const_iterator iter = job_map.find(job);
+        if(iter == job_map.end()){
+            ErrorExit("No job named: "+job);
+        }
+        ProcessPool::JobFunctionPtr func = iter->second;
+        std::vector<std::string> params_separated;
+        while(!params.empty()){
+            bool in_quotes = false;
+            int space = std::string::npos;
+            for(int i=0; i<params.size(); ++i){
+                if(params[i] == '\"'){
+                    in_quotes = !in_quotes;
+                }
+                if(!in_quotes && params[i] == ' '){
+                    space = i;
+                    break;
+                }
+            }
+            if(space == std::string::npos){
+                params_separated.push_back(params);
+                params.clear();
+            } else {
+                params_separated.push_back(params.substr(0, space));
+                params = params.substr(space + 1, params.size()-(space+1));
+            }
+        }
+        int argc = (int)params_separated.size();
+        std::vector<const char*> argv;
+        for(int i=0; i<argc; ++i){
+            argv.push_back(params_separated[i].c_str());
+        }
+        HANDLE temp_pipe_read, temp_pipe_write;
+        if(!CreatePipe(&temp_pipe_read, &temp_pipe_write, NULL, 0)){
+            ErrorExit("Error creating temporary process pipe");
+        }
+        HANDLE parent_communicate = GetStdHandle(STD_OUTPUT_HANDLE);
+        if(!SetStdHandle(STD_OUTPUT_HANDLE, temp_pipe_write)){
+            ErrorExit("Error assigning STD_OUTPUT_HANDLE to temporary process pipe");
+        }
+        if(!SetStdHandle(STD_ERROR_HANDLE, temp_pipe_write)){
+            ErrorExit("Error assigning STD_ERROR_HANDLE to temporary process pipe");
+        }
+        int ret_val = func(argc, &argv[0]);
+        SetStdHandle(STD_OUTPUT_HANDLE, parent_communicate);
+        SetStdHandle(STD_ERROR_HANDLE, parent_communicate);
+        CloseHandle(temp_pipe_read);
+        CloseHandle(temp_pipe_write);
+        SendMessageToParent("NULL: "); // TODO: Why does it stop working without this?
+        return ret_val;
+    }
+    return 0;
+}
+
 } // namespace ""
 
-int ProcessPool::WorkerProcessMain(JobMap job_map) {
+
+int ProcessPool::WorkerProcessMain(const JobMap &job_map) {
     SendMessageToParent(kChildInitString);
     while(1){
         std::string msg = WaitForParentMessage();
-        SendMessageToParent("Message acknowledged: "+msg);
+        ChildProcessMessage(msg, job_map);
+        SendMessageToParent("STATE: IDLE");
     }
     return 0;
+}
+
+void ProcessPool::NotifyTaskComplete() {
+    ProcessFirstTaskInQueue();
 }
 
 #endif //_WIN32

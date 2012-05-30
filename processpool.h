@@ -38,32 +38,38 @@ class OSProcess {
 
 #endif //_WIN32
 
+class ProcessPool;
+
 class ProcessHandle {
 public:
     void Process(const std::string& task);
     inline bool idle(){return idle_;}
+    void ProcessInBackground();
     
-    ProcessHandle();
+    ProcessHandle(ProcessPool* parent_process_pool);
    
 private:
     bool idle_;
     OSProcess os_process_;
+    ProcessPool* parent_process_pool_;
     
     void CreateProcess();
+    bool ProcessMessageFromChild(const std::string& msg);
     DISALLOW_COPY_AND_ASSIGN(ProcessHandle);
 };
 
 
 class ProcessPool {
 public:
-    typedef int (*JobFunctionPtr)(int argc, char* argv[]);
+    typedef int (*JobFunctionPtr)(int argc, const char* argv[]);
     typedef std::map<std::string, ProcessPool::JobFunctionPtr> JobMap;
     enum Error{SUCCESS = 0,
                NO_IDLE_PROCESS = -1,
                NO_TASK_IN_QUEUE = -2};
     static bool AmIAWorkerProcess( int argc, char* argv[] );
-    static int WorkerProcessMain(JobMap job_map);
-        
+    static int WorkerProcessMain(const JobMap &job_map);
+    
+    void NotifyTaskComplete();
     void Schedule(const std::string& task);
     ProcessPool(int size);
     ~ProcessPool();
