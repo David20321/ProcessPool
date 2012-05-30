@@ -12,7 +12,7 @@ int CreateFile(int argc, const char* argv[]){
 }
 
 int main(int argc, char* argv[]){
-    if(argc != 1){//ProcessPool::AmIAWorkerProcess(argc, argv)){
+    if(ProcessPool::AmIAWorkerProcess(argc, argv)){
         ProcessPool::JobMap jobs;
         jobs["CreateFile"] = &CreateFile;
         return ProcessPool::WorkerProcessMain(jobs);

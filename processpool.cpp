@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "processpool.h"
 
 namespace {
@@ -6,14 +7,19 @@ const char *kWorkerProcessString = "ProcessPool::IAmAWorkerProcess";
 const char *kChildInitString = "ACK_INIT: Child process reporting for duty";
 }
 
-#ifdef _WIN32
 namespace {
+#ifdef _WIN32
     void ErrorExit(const std::string &msg){
         MessageBox(NULL, msg.c_str(), TEXT("Error"), MB_OK); 
         ExitProcess(1);
     }
-}
+#else
+    void ErrorExit(const std::string &msg){
+        exit(1);
+    }
+    
 #endif
+}
 
 void ProcessPool::Resize( int _size ) {
     int old_size = (int)processes_.size();
@@ -50,7 +56,7 @@ ProcessPool::Error ProcessPool::ProcessFirstTaskInQueue() {
 }
 
 bool ProcessPool::AmIAWorkerProcess( int argc, char* argv[] ) {
-    return (argc >= 2 && strcmp(argv[1],kWorkerProcessString));
+    return (argc >= 2 && strcmp(argv[1],kWorkerProcessString) == 0);
 }
 
 ProcessPool::ProcessPool( int size ) {
@@ -318,6 +324,7 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
 
 } // namespace ""
 
+#endif //_WIN32
 
 int ProcessPool::WorkerProcessMain(const JobMap &job_map) {
     SendMessageToParent(kChildInitString);
@@ -332,5 +339,3 @@ int ProcessPool::WorkerProcessMain(const JobMap &job_map) {
 void ProcessPool::NotifyTaskComplete() {
     ProcessFirstTaskInQueue();
 }
-
-#endif //_WIN32

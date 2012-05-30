@@ -6,18 +6,9 @@
 #include <vector>
 #include <queue>
 #include <map>
-
-// From Google Style Guide
-// A macro to disallow the copy constructor and operator= functions
-// This should be used in the private: declarations for a class
-#ifndef DISALLOW_COPY_AND_ASSIGN
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName&);               \
-    void operator=(const TypeName&)
-#endif
+#include "disallow_copy_and_assign.h"
 
 #ifdef _WIN32
-
 #include <windows.h>
 
 class OSProcess {
@@ -39,7 +30,6 @@ class OSProcess {
 #endif //_WIN32
 
 class ProcessPool;
-
 class ProcessHandle {
 public:
     void Process(const std::string& task);
@@ -68,7 +58,7 @@ public:
                NO_TASK_IN_QUEUE = -2};
     static bool AmIAWorkerProcess( int argc, char* argv[] );
     static int WorkerProcessMain(const JobMap &job_map);
-    
+
     void NotifyTaskComplete();
     void Schedule(const std::string& task);
     ProcessPool(int size);
