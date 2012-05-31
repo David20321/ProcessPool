@@ -460,9 +460,16 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
         std::vector<std::string> params_separated;
         while(!params.empty()){
             bool in_quotes = false;
+            int quote_start = -1;
+            int quote_end = -1;
             int space = std::string::npos;
             for(int i=0; i<params.size(); ++i){
                 if(params[i] == '\"'){
+                    if(!in_quotes){
+                        quote_start = i;
+                    } else {
+                        quote_end = i;
+                    }
                     in_quotes = !in_quotes;
                 }
                 if(!in_quotes && params[i] == ' '){
@@ -470,7 +477,10 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
                     break;
                 }
             }
-            if(space == std::string::npos){
+            if(quote_start != -1 && quote_end != -1){
+                params_separated.push_back(params.substr(quote_start+1, quote_end-quote_start-1));
+                params = params.substr(space + 1, params.size()-(space+1));                
+            } else if(space == std::string::npos){
                 params_separated.push_back(params);
                 params.clear();
             } else {
