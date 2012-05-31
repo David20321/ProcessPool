@@ -7,7 +7,11 @@ using namespace std;
 
 int CreateFile(int argc, const char* argv[]){
     cout << "CreateFile() called with param \"" << argv[0] << "\"" << endl;
+#ifdef _WIN32
     Sleep(4000);
+#else
+    sleep(4);
+#endif
     return 0;   
 }
 

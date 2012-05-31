@@ -15,9 +15,9 @@ namespace {
     }
 #else
     void ErrorExit(const std::string &msg){
+        std::cout << msg << std::endl;
         exit(1);
-    }
-    
+    }    
 #endif
 }
 
@@ -60,6 +60,10 @@ bool ProcessPool::AmIAWorkerProcess( int argc, char* argv[] ) {
 }
 
 ProcessPool::ProcessPool( int size ) {
+#ifdef _WIN32
+#else
+    pthread_mutex_init(&mutex_, NULL);
+#endif    
     Resize(size);
 }
 
@@ -68,8 +72,16 @@ ProcessPool::~ProcessPool() {
 }
 
 void ProcessPool::Schedule( const std::string& task ) {
+#ifdef _WIN32
+#else
+    pthread_mutex_lock(&mutex_);
+#endif        
     tasks_.push(task);
     ProcessFirstTaskInQueue();
+#ifdef _WIN32
+#else
+    pthread_mutex_unlock(&mutex_);
+#endif            
 }
 
 ProcessHandle::ProcessHandle(ProcessPool* parent_process_pool)
@@ -102,36 +114,47 @@ void ProcessHandle::ProcessInBackground( ) {
 }
 
 namespace {
+#ifdef _WIN32
     DWORD WINAPI ThreadFunc(LPVOID process_handle_ptr){
         ((ProcessHandle*)process_handle_ptr)->ProcessInBackground();
         return 0;
     }
+#else
+    void* ThreadFunc(void* process_handle_ptr){
+        ((ProcessHandle*)process_handle_ptr)->ProcessInBackground();
+        return NULL;
+    }
+#endif
 }
 
 void ProcessHandle::Process( const std::string& task ) {
     os_process_.SendMessageToChild("TASK: "+task);
     idle_ = false;
+#ifdef _WIN32
     HANDLE thread = CreateThread(NULL, 0, ThreadFunc, this, 0, NULL);
     CloseHandle(thread);
+#else
+    pthread_t thread;
+    pthread_create(&thread, NULL, ThreadFunc, this);
+#endif
 }
+
+namespace {
+const int kPathBufferSize = 1024;
+const int kPipeBufSize = 256;    
+#ifdef _WIN32 
+std::wstring WStrFromCStr(const char* cstr){
+    int cstr_len = (int)strlen(cstr);
+    std::wstring wstr;
+    wstr.resize(cstr_len);
+    for(int i=0; i<cstr_len; ++i){
+        wstr[i] = cstr[i];
+    }
+    return wstr;
+}
+#endif
 
 #ifdef _WIN32
-
-namespace {
-    std::wstring WStrFromCStr(const char* cstr){
-        int cstr_len = (int)strlen(cstr);
-        std::wstring wstr;
-        wstr.resize(cstr_len);
-        for(int i=0; i<cstr_len; ++i){
-            wstr[i] = cstr[i];
-        }
-        return wstr;
-    }
-    const int kPathBufferSize = 1024;
-    const int kPipeBufSize = 256;
-}
-
-namespace {
 void ReadMessageFromPipe(const HANDLE &pipe_handle, std::string *msg){
     DWORD dwRead; 
     CHAR chBuf[kPipeBufSize]; 
@@ -152,7 +175,31 @@ void ReadMessageFromPipe(const HANDLE &pipe_handle, std::string *msg){
         }
     }
 }
+#else
+void ReadMessageFromPipe(int pipe_handle, std::string *msg){
+    int bytes_read; 
+    char buf[1]; 
+    std::string &message = *msg;
+    message.clear();
+    
+    bool continue_reading = true;
+    while(continue_reading){
+        bytes_read = read(pipe_handle, buf, 1);
+        if(bytes_read < 0){
+            exit(1); // Other process was probably killed
+        }
+        if(buf[0] == '\0'){
+            continue_reading = false;
+        } else {
+            message += buf[0];
+        }
+    }
+}
+#endif
+}
 
+    
+#ifdef _WIN32
 void WriteMessageToPipe(const HANDLE& pipe_handle, const std::string &msg){
     int msg_length = (int)msg.length();
     int total_sent = 0;
@@ -168,7 +215,25 @@ void WriteMessageToPipe(const HANDLE& pipe_handle, const std::string &msg){
         ExitProcess(1); // Other process was probably killed
     }
 }
+#else
+void WriteMessageToPipe(int pipe_handle, const std::string &msg){
+    int msg_length = (int)msg.length();
+    int total_sent = 0;
+    int bytes_written;
+    while (total_sent < msg_length){
+        bytes_written = write(pipe_handle, &msg[0], (int)msg.length());
+        if(bytes_written<0){
+            exit(1); // Other process was probably killed
+        }
+        total_sent += bytes_written;
+    }
+    char end_str[] = {'\0'};
+    bytes_written = write(pipe_handle, end_str, 1);
+    if(bytes_written != 1){
+        exit(1); // Other process was probably killed
+    }
 }
+#endif
 
 std::string OSProcess::WaitForChildMessage() {
     std::string msg;
@@ -176,6 +241,7 @@ std::string OSProcess::WaitForChildMessage() {
     return msg;
 }
 
+#ifdef _WIN32
 OSProcess::OSProcess() {
     std::cout << "Creating OS Process" << std::endl;
     wchar_t path_utf16_buf[kPathBufferSize];
@@ -235,6 +301,93 @@ OSProcess::~OSProcess() {
     CloseHandle(read_pipe_);
     CloseHandle(write_pipe_);
 }
+#else
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+OSProcess::OSProcess() {
+    std::cout << "Creating OS Process" << std::endl;
+    
+    int pipe_in[2], pipe_out[2];
+    if(pipe(pipe_in) == -1){
+        ErrorExit("Error creating first pipe");
+    }
+    if(pipe(pipe_out) == -1){
+        ErrorExit("Error creating second pipe");
+    }
+    
+    int pid = fork();
+    if(pid == 0){
+        if(dup2(pipe_in[0], STDIN_FILENO) == -1){
+            ErrorExit("Error assigning child STDIN pipe");
+        }
+        if(dup2(pipe_out[1], STDOUT_FILENO) == -1){
+            ErrorExit("Error assigning child STDOUT pipe");
+        }
+        if(dup2(pipe_out[1], STDERR_FILENO) == -1){
+            ErrorExit("Error assigning child STDERR pipe");
+        }
+        if(close(pipe_in[0]) == -1){
+            ErrorExit("Error closing pipe a");
+        }
+        if(close(pipe_in[1]) == -1){
+            ErrorExit("Error closing pipe b");
+        }
+        if(close(pipe_out[0]) == -1){
+            ErrorExit("Error closing pipe c");
+        }
+        if(close(pipe_out[1]) == -1){
+            ErrorExit("Error closing pipe d");
+        }
+        
+#ifdef __linux___
+        std::string path = readlink("/proc/self/exe");
+#endif
+#ifdef __APPLE__
+        std::string path;
+        {
+            char path_buf[1024];
+            uint32_t size = sizeof(path_buf);
+            if(_NSGetExecutablePath(path_buf, &size) == 0){
+                path = path_buf;
+            } else {
+                ErrorExit("Could not get application path");
+            }
+        }
+#endif        
+        std::vector<char*> args;
+        args.push_back((char*)path.c_str());
+        args.push_back((char*)kWorkerProcessString);
+        args.push_back(NULL);
+        if(execv(path.c_str(), &args[0]) == -1){
+            ErrorExit("Could not exec: "+path);
+        }
+    } else if(pid == -1){
+        ErrorExit("Problem with fork()");
+    }
+    
+    if(close(pipe_in[0]) == -1){
+        ErrorExit("Error closing pipe e");
+    }
+    if(close(pipe_out[1]) == -1){
+        ErrorExit("Error closing pipe f");
+    }
+    
+    process_info_ = pid; 
+    read_pipe_ = pipe_out[0];
+    write_pipe_ = pipe_in[1];
+    
+    if(WaitForChildMessage() != kChildInitString){
+        ErrorExit("Invalid initial acknowledgement from child process");
+    }
+}
+
+#include <signal.h>
+OSProcess::~OSProcess() {
+    kill(process_info_, SIGKILL);
+}
+#endif
+
 
 void OSProcess::SendMessageToChild( const std::string &msg ) {
     WriteMessageToPipe(write_pipe_, msg);
@@ -243,11 +396,19 @@ void OSProcess::SendMessageToChild( const std::string &msg ) {
 namespace {
 
 void SendMessageToParent(const std::string &msg){
+#ifdef _WIN32
     WriteMessageToPipe(GetStdHandle(STD_OUTPUT_HANDLE), msg);
+#else
+    WriteMessageToPipe(STDOUT_FILENO, msg);
+#endif
 }
 std::string WaitForParentMessage(){
     std::string msg;
+#ifdef _WIN32    
     ReadMessageFromPipe(GetStdHandle(STD_INPUT_HANDLE), &msg);
+#else
+    ReadMessageFromPipe(STDIN_FILENO, &msg);
+#endif
     return msg;
 }
 
@@ -300,6 +461,7 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
         for(int i=0; i<argc; ++i){
             argv.push_back(params_separated[i].c_str());
         }
+#ifdef _WIN32
         HANDLE temp_pipe_read, temp_pipe_write;
         if(!CreatePipe(&temp_pipe_read, &temp_pipe_write, NULL, 0)){
             ErrorExit("Error creating temporary process pipe");
@@ -316,6 +478,9 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
         SetStdHandle(STD_ERROR_HANDLE, parent_communicate);
         CloseHandle(temp_pipe_read);
         CloseHandle(temp_pipe_write);
+#else
+        int ret_val = func(argc, &argv[0]);
+#endif
         SendMessageToParent("NULL: "); // TODO: Why does it stop working without this?
         return ret_val;
     }
@@ -323,8 +488,6 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
 }
 
 } // namespace ""
-
-#endif //_WIN32
 
 int ProcessPool::WorkerProcessMain(const JobMap &job_map) {
     SendMessageToParent(kChildInitString);
@@ -337,5 +500,13 @@ int ProcessPool::WorkerProcessMain(const JobMap &job_map) {
 }
 
 void ProcessPool::NotifyTaskComplete() {
+#ifdef _WIN32
+#else
+    pthread_mutex_lock(&mutex_);
+#endif        
     ProcessFirstTaskInQueue();
+#ifdef _WIN32
+#else
+    pthread_mutex_unlock(&mutex_);
+#endif        
 }

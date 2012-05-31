@@ -10,7 +10,6 @@
 
 #ifdef _WIN32
 #include <windows.h>
-
 class OSProcess {
     public:
         OSProcess();
@@ -26,7 +25,22 @@ class OSProcess {
     
         DISALLOW_COPY_AND_ASSIGN(OSProcess);
 };
-
+#else 
+#include <unistd.h>
+class OSProcess {
+public:
+    OSProcess();
+    ~OSProcess();
+    
+    std::string WaitForChildMessage();
+    void SendMessageToChild(const std::string &msg);
+private:
+    int read_pipe_;
+    int write_pipe_;
+    int process_info_;
+    
+    DISALLOW_COPY_AND_ASSIGN(OSProcess);
+};
 #endif //_WIN32
 
 class ProcessPool;
@@ -77,6 +91,11 @@ private:
     
     std::vector<ProcessHandle*> processes_;
     std::queue<std::string> tasks_;
+#ifdef _WIN32
+#else
+    pthread_mutex_t mutex_;
+#endif
+    
     DISALLOW_COPY_AND_ASSIGN(ProcessPool);
 };
 
