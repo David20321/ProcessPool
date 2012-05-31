@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <cstdio>
 #include "processpool.h"
 
 using namespace std;

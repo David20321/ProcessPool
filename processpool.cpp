@@ -1,6 +1,9 @@
 #include <iostream>
 #include <sstream>
 #include "processpool.h"
+#include <cstring>
+#include <cstdlib>
+#include <pthread.h>
 
 namespace {
 const char *kWorkerProcessString = "ProcessPool::IAmAWorkerProcess";
@@ -349,17 +352,6 @@ OSProcess::OSProcess() {
             ErrorExit("Error closing pipe d");
         }
         
-#ifdef __linux___
-        std::string path;
-        char buf[1024];
-        ssize_t len = ::readlink("/proc/self/exe", buf, sizeof(buf)-1);
-        if (len != -1) {
-            buf[len] = '\0';
-            path = buf;
-        } else {
-            ErrorExit("Could not get application path");
-        }
-#endif
 #ifdef __APPLE__
         std::string path;
         {
@@ -370,6 +362,16 @@ OSProcess::OSProcess() {
             } else {
                 ErrorExit("Could not get application path");
             }
+        }
+#else
+	std::string path;
+        char buf[1024];
+        ssize_t len = ::readlink("/proc/self/exe", buf, sizeof(buf)-1);
+        if (len != -1) {
+            buf[len] = '\0';
+            path = buf;
+        } else {
+            ErrorExit("Could not get application path");
         }
 #endif        
         std::vector<char*> args;
