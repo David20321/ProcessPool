@@ -92,6 +92,7 @@ private:
     std::vector<ProcessHandle*> processes_;
     std::queue<std::string> tasks_;
 #ifdef _WIN32
+    HANDLE mutex_;
 #else
     pthread_mutex_t mutex_;
 #endif

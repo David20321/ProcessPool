@@ -61,6 +61,7 @@ bool ProcessPool::AmIAWorkerProcess( int argc, char* argv[] ) {
 
 ProcessPool::ProcessPool( int size ) {
 #ifdef _WIN32
+    mutex_ = CreateMutex(NULL, false, NULL);
 #else
     pthread_mutex_init(&mutex_, NULL);
 #endif    
@@ -73,15 +74,23 @@ ProcessPool::~ProcessPool() {
 
 void ProcessPool::Schedule( const std::string& task ) {
 #ifdef _WIN32
+    WaitForSingleObject(mutex_,INFINITE);
 #else
-    pthread_mutex_lock(&mutex_);
+    if(pthread_mutex_lock(&mutex_)){
+        ErrorExit("Error locking mutex");
+    }
 #endif        
     tasks_.push(task);
     ProcessFirstTaskInQueue();
 #ifdef _WIN32
+    if(!ReleaseMutex(mutex_)){
+        ErrorExit("Error releasing mutex");
+    }
 #else
-    pthread_mutex_unlock(&mutex_);
-#endif            
+    if(pthread_mutex_unlock(&mutex_)){
+        ErrorExit("Error releasing mutex");
+    }
+#endif                   
 }
 
 ProcessHandle::ProcessHandle(ProcessPool* parent_process_pool)
@@ -501,12 +510,20 @@ int ProcessPool::WorkerProcessMain(const JobMap &job_map) {
 
 void ProcessPool::NotifyTaskComplete() {
 #ifdef _WIN32
+    WaitForSingleObject(mutex_,INFINITE);
 #else
-    pthread_mutex_lock(&mutex_);
+    if(pthread_mutex_lock(&mutex_)){
+        ErrorExit("Error locking mutex");
+    }
 #endif        
     ProcessFirstTaskInQueue();
 #ifdef _WIN32
+    if(!ReleaseMutex(mutex_)){
+        ErrorExit("Error releasing mutex");
+    }
 #else
-    pthread_mutex_unlock(&mutex_);
+    if(pthread_mutex_unlock(&mutex_)){
+        ErrorExit("Error releasing mutex");
+    }
 #endif        
 }
