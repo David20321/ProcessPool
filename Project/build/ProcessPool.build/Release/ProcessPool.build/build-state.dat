@@ -1,207 +1,0 @@
-TProcessPool
-v7
-r0
-t360118526.036273
-cCheck dependencies
-cCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/processpool.o /Users/david/Documents/ProcessPool/Project/../processpool.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
-cCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/test.o /Users/david/Documents/ProcessPool/Project/../test.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
-cLd /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool normal x86_64
-cCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/processpool.o /Users/david/Documents/ProcessPool/Project/../processpool.cpp normal i386 c++ com.apple.compilers.gcc.4_2
-cCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/test.o /Users/david/Documents/ProcessPool/Project/../test.cpp normal i386 c++ com.apple.compilers.gcc.4_2
-cLd /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool normal i386
-cCreateUniversalBinary /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool normal "x86_64 i386"
-cGenerateDSYMFile /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool.dSYM /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool
-
-N/Developer/SDKs/MacOSX10.6.sdk
-c000000004D5A274300000000000000EE
-t1297753923
-s238
-
-N/Developer/SDKs/MacOSX10.6.sdk/usr/include/mach-o/dyld.h
-c000000004D0890EB0000000000003D47
-t1292407019
-s15687
-
-N/Developer/SDKs/MacOSX10.6.sdk/usr/include/signal.h
-c000000004BBD2CE900000000000014F0
-t1270689001
-s5360
-
-N/Developer/SDKs/MacOSX10.6.sdk/usr/include/unistd.h
-c000000004BBD2CE9000000000000563E
-t1270689001
-s22078
-
-N/Users/david/Documents/ProcessPool/Project/../processpool.cpp
-c000000004FC6C17B0000000000003F05
-t1338425723
-s16133
-i<iostream>
-i<sstream>
-i"processpool.h"
-i<mach-o/dyld.h>
-i<signal.h>
-
-N/Users/david/Documents/ProcessPool/Project/../test.cpp
-c000000004FC6C07E000000000000042F
-t1338425470
-s1071
-i<iostream>
-i<string>
-i<map>
-i"processpool.h"
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool
-t1338425726
-s59548
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool.LinkFileList
-c000000004FC6C06000000000000000F7
-t1338425440
-s247
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/processpool.o
-t1338425725
-s299476
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/test.o
-t1338425472
-s141880
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool
-t1338425725
-s65968
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool.LinkFileList
-c000000004FC6C06000000000000000FB
-t1338425440
-s251
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/processpool.o
-t1338425724
-s325224
-
-N/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/test.o
-t1338425470
-s145972
-
-N/Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool
-t1338425726
-s133276
-
-N/Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool.dSYM
-t1338425726
-s102
-
-N/Users/david/Documents/ProcessPool/disallow_copy_and_assign.h
-c000000004FC6A1B600000000000001BF
-t1338417590
-s447
-
-N/Users/david/Documents/ProcessPool/processpool.h
-c000000004FC6B93D00000000000009CB
-t1338423613
-s2507
-i<string>
-i<vector>
-i<queue>
-i<map>
-i"disallow_copy_and_assign.h"
-i<windows.h>
-i<unistd.h>
-
-CCheck dependencies
-r0
-lSLF07#2@18"Check dependencies360118525#360118525#0(0"0(0#1#0"4535002432#0"0#
-
-CCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/processpool.o /Users/david/Documents/ProcessPool/Project/../processpool.cpp normal i386 c++ com.apple.compilers.gcc.4_2
-s360118525.092340
-e360118525.987598
-r1
-xCompileC
-xbuild/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/processpool.o
-x/Users/david/Documents/ProcessPool/Project/../processpool.cpp
-xnormal
-xi386
-xc++
-xcom.apple.compilers.gcc.4_2
-lSLF07#2@69"Compile /Users/david/Documents/ProcessPool/Project/../processpool.cpp360118525#360118525#0(0"0(0#0#61"/Users/david/Documents/ProcessPool/Project/../processpool.cpp4535000720#1454"    cd /Users/david/Documents/ProcessPool/Project    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch i386 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -Os -mdynamic-no-pic -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -fvisibility=hidden -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-generated-files.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-own-target-headers.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-all-target-headers.hmap -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-project-headers.hmap -F/Users/david/Documents/ProcessPool/Project/build/Release -I/Users/david/Documents/ProcessPool/Project/build/Release/include -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources/i386 -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources -c /Users/david/Documents/ProcessPool/Project/../processpool.cpp -o /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/processpool.o0#
-
-CCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/test.o /Users/david/Documents/ProcessPool/Project/../test.cpp normal i386 c++ com.apple.compilers.gcc.4_2
-s360118272.470069
-e360118272.818620
-r1
-xCompileC
-xbuild/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/test.o
-x/Users/david/Documents/ProcessPool/Project/../test.cpp
-xnormal
-xi386
-xc++
-xcom.apple.compilers.gcc.4_2
-lSLF07#2@62"Compile /Users/david/Documents/ProcessPool/Project/../test.cpp360118272#360118272#0(0"0(0#0#54"/Users/david/Documents/ProcessPool/Project/../test.cpp4535000720#1440"    cd /Users/david/Documents/ProcessPool/Project    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch i386 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -Os -mdynamic-no-pic -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -fvisibility=hidden -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-generated-files.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-own-target-headers.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-all-target-headers.hmap -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-project-headers.hmap -F/Users/david/Documents/ProcessPool/Project/build/Release -I/Users/david/Documents/ProcessPool/Project/build/Release/include -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources/i386 -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources -c /Users/david/Documents/ProcessPool/Project/../test.cpp -o /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/test.o0#
-
-CCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/processpool.o /Users/david/Documents/ProcessPool/Project/../processpool.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
-s360118525.090961
-e360118525.091806
-r1
-xCompileC
-xbuild/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/processpool.o
-x/Users/david/Documents/ProcessPool/Project/../processpool.cpp
-xnormal
-xx86_64
-xc++
-xcom.apple.compilers.gcc.4_2
-lSLF07#2@69"Compile /Users/david/Documents/ProcessPool/Project/../processpool.cpp360118525#360118525#0(585"/Users/david/Documents/ProcessPool/Project/../processpool.cpp: In function 'int<unnamed>::ChildProcessMessage(const std::string&, const std::map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int (*)(int, const char**), std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int (*)(int, const char**)> > >&)':/Users/david/Documents/ProcessPool/Project/../processpool.cpp:441: warning: overflow in implicit constant conversion1(22@40"Overflow in implicit constant conversion360118525#468#117#0(6@61"/Users/david/Documents/ProcessPool/Project/../processpool.cpp360118523#441#0#441#0#0"0(0#0#61"/Users/david/Documents/ProcessPool/Project/../processpool.cpp4535000720#1460"    cd /Users/david/Documents/ProcessPool/Project    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -Os -mdynamic-no-pic -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -fvisibility=hidden -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-generated-files.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-own-target-headers.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-all-target-headers.hmap -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-project-headers.hmap -F/Users/david/Documents/ProcessPool/Project/build/Release -I/Users/david/Documents/ProcessPool/Project/build/Release/include -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources/x86_64 -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources -c /Users/david/Documents/ProcessPool/Project/../processpool.cpp -o /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/processpool.o0#
-
-CCompileC build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/test.o /Users/david/Documents/ProcessPool/Project/../test.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
-s360118272.468863
-e360118272.469539
-r1
-xCompileC
-xbuild/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/test.o
-x/Users/david/Documents/ProcessPool/Project/../test.cpp
-xnormal
-xx86_64
-xc++
-xcom.apple.compilers.gcc.4_2
-lSLF07#2@62"Compile /Users/david/Documents/ProcessPool/Project/../test.cpp360118272#360118272#0(0"0(0#0#54"/Users/david/Documents/ProcessPool/Project/../test.cpp4535000720#1446"    cd /Users/david/Documents/ProcessPool/Project    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -Os -mdynamic-no-pic -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -fvisibility=hidden -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-generated-files.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-own-target-headers.hmap -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-all-target-headers.hmap -iquote /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/ProcessPool-project-headers.hmap -F/Users/david/Documents/ProcessPool/Project/build/Release -I/Users/david/Documents/ProcessPool/Project/build/Release/include -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources/x86_64 -I/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/DerivedSources -c /Users/david/Documents/ProcessPool/Project/../test.cpp -o /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/test.o0#
-
-CCreateUniversalBinary /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool normal "x86_64 i386"
-s360118526.002207
-e360118526.004271
-r1
-xCreateUniversalBinary
-x/Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool
-xnormal
-xx86_64 i386
-lSLF07#2@68"CreateUniversalBinary build/Release/ProcessPool normal "x86_64 i386"360118526#360118526#0(0"0(0#0#54"/Users/david/Documents/ProcessPool/Project/x86_64 i3864535000720#405"    cd /Users/david/Documents/ProcessPool/Project    /usr/bin/lipo -create /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool -output /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool0#
-
-CGenerateDSYMFile /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool.dSYM /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool
-s360118526.004321
-e360118526.036238
-r1
-xGenerateDSYMFile
-x/Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool.dSYM
-x/Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool
-lSLF07#2@73"GenerateDSYMFile build/Release/ProcessPool.dSYM build/Release/ProcessPool360118526#360118526#0(0"0(0#0#68"/Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool4535000720#228"    cd /Users/david/Documents/ProcessPool/Project    /Developer/usr/bin/dsymutil /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool -o /Users/david/Documents/ProcessPool/Project/build/Release/ProcessPool.dSYM0#
-
-CLd /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool normal i386
-s360118525.987664
-e360118526.002073
-r1
-xLd
-x/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool
-xnormal
-xi386
-lSLF07#2@129"Link /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool360118525#360118526#0(0"0(0#0#0"4535000720#594"    cd /Users/david/Documents/ProcessPool/Project    setenv MACOSX_DEPLOYMENT_TARGET 10.6    /Developer/usr/bin/g++-4.2 -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk -L/Users/david/Documents/ProcessPool/Project/build/Release -F/Users/david/Documents/ProcessPool/Project/build/Release -filelist /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool.LinkFileList -mmacosx-version-min=10.6 -o /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/i386/ProcessPool0#
-
-CLd /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool normal x86_64
-s360118525.091901
-e360118525.106198
-r1
-xLd
-x/Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool
-xnormal
-xx86_64
-lSLF07#2@131"Link /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool360118525#360118525#0(0"0(0#0#0"4535000720#600"    cd /Users/david/Documents/ProcessPool/Project    setenv MACOSX_DEPLOYMENT_TARGET 10.6    /Developer/usr/bin/g++-4.2 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk -L/Users/david/Documents/ProcessPool/Project/build/Release -F/Users/david/Documents/ProcessPool/Project/build/Release -filelist /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool.LinkFileList -mmacosx-version-min=10.6 -o /Users/david/Documents/ProcessPool/Project/build/ProcessPool.build/Release/ProcessPool.build/Objects-normal/x86_64/ProcessPool0#
-

@@ -488,33 +488,7 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
         CloseHandle(temp_pipe_read);
         CloseHandle(temp_pipe_write);
 #else
-        int pipe_old = dup(STDOUT_FILENO);
-        int pipe_temp[2];
-        if(pipe(pipe_temp) == -1){
-            ErrorExit("Error creating temp pipe");
-        }  
-        if(dup2(pipe_temp[1], STDERR_FILENO) == -1){
-            ErrorExit("Error redirecting child STDERR pipe");
-        }
-        if(dup2(pipe_temp[1], STDOUT_FILENO) == -1){
-            ErrorExit("Error redirecting child STDOUT pipe");
-        }
         int ret_val = func(argc, &argv[0]);
-        if(dup2(pipe_old, STDERR_FILENO) == -1){
-            ErrorExit("Error redirecting child STDERR pipe");
-        }
-        if(dup2(pipe_old, STDOUT_FILENO) == -1){
-            ErrorExit("Error redirecting child STDOUT pipe");
-        }
-        if(close(pipe_temp[0]) == -1){
-            ErrorExit("Error closing pipe a");
-        }
-        if(close(pipe_temp[1]) == -1){
-            ErrorExit("Error closing pipe b");
-        }
-        if(close(pipe_old) == -1){
-            ErrorExit("Error closing pipe c");
-        }
 #endif
         SendMessageToParent("NULL: "); // TODO: Why does it stop working without this?
         return ret_val;
