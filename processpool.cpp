@@ -350,7 +350,15 @@ OSProcess::OSProcess() {
         }
         
 #ifdef __linux___
-        std::string path = readlink("/proc/self/exe");
+        std::string path;
+        char buf[1024];
+        ssize_t len = ::readlink("/proc/self/exe", buf, sizeof(buf)-1);
+        if (len != -1) {
+            buf[len] = '\0';
+            path = buf;
+        } else {
+            ErrorExit("Could not get application path");
+        }
 #endif
 #ifdef __APPLE__
         std::string path;
