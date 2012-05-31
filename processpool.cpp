@@ -3,7 +3,10 @@
 #include "processpool.h"
 #include <cstring>
 #include <cstdlib>
+
+#ifndef _WIN32
 #include <pthread.h>
+#endif
 
 namespace {
 const char *kWorkerProcessString = "ProcessPool::IAmAWorkerProcess";
