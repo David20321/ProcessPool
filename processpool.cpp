@@ -60,12 +60,31 @@ ProcessPool::Error ProcessPool::ProcessFirstTaskInQueue() {
         if(num_idle == num_processes){
             #ifdef _WIN32
                 SetEvent(idle_event_);
+            #else
+                if(pthread_mutex_lock(&idle_event_mutex_)){
+                    ErrorExit("Error locking mutex");
+                }
+                idle_event_bool_ = true;
+                if(pthread_cond_signal(&idle_event_cond_)){
+                    ErrorExit("Error signalling condition");
+                }                
+                if(pthread_mutex_unlock(&idle_event_mutex_)){
+                    ErrorExit("Error unlocking mutex");
+                }            
             #endif
         }
         return ProcessPool::NO_TASK_IN_QUEUE;
     } else {
 #ifdef _WIN32
         ResetEvent(idle_event_);
+#else
+        if(pthread_mutex_lock(&idle_event_mutex_)){
+            ErrorExit("Error locking mutex");
+        }
+        idle_event_bool_ = false;
+        if(pthread_mutex_unlock(&idle_event_mutex_)){
+            ErrorExit("Error unlocking mutex");
+        }        
 #endif
     }
     int idle_process = GetIdleProcessIndex();
@@ -89,6 +108,9 @@ ProcessPool::ProcessPool( const std::string &worker_path, int size ):
         idle_event_ = CreateEvent(NULL, true, true, NULL);
     #else
         pthread_mutex_init(&mutex_, NULL);
+        pthread_mutex_init(&idle_event_mutex_, NULL);
+        pthread_cond_init(&idle_event_cond_, NULL);
+        idle_event_bool_ = true;
     #endif    
     Resize(size);
 }
@@ -98,6 +120,10 @@ ProcessPool::~ProcessPool() {
     #ifdef _WIN32
         CloseHandle(mutex_);
         CloseHandle(idle_event_);
+    #else
+        pthread_mutex_destroy(&mutex_);
+        pthread_mutex_destroy(&idle_event_mutex_);
+        pthread_cond_destroy(&idle_event_cond_);
     #endif
 }
 
@@ -636,5 +662,17 @@ void ProcessPool::NotifyTaskComplete() {
 void ProcessPool::WaitForTasksToComplete() {
     #ifdef _WIN32
         WaitForSingleObject(idle_event_, INFINITE);
+    #else
+        if(pthread_mutex_lock(&idle_event_mutex_)){
+            ErrorExit("Error locking mutex");
+        }
+        if(!idle_event_bool_){
+            pthread_cond_wait(&idle_event_cond_, &idle_event_mutex_);
+        }
+        if(pthread_mutex_unlock(&idle_event_mutex_)){
+            ErrorExit("Error locking mutex");
+        }
+        
+    
     #endif
 }

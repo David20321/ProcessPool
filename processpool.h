@@ -98,6 +98,9 @@ private:
     HANDLE idle_event_;
 #else
     pthread_mutex_t mutex_;
+    pthread_mutex_t idle_event_mutex_;
+    pthread_cond_t idle_event_cond_;
+    bool idle_event_bool_;
 #endif
     
     DISALLOW_COPY_AND_ASSIGN(ProcessPool);

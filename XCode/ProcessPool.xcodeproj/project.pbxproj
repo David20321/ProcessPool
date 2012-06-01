@@ -33,14 +33,14 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 8DD76F620486A84900D96B5E /* Main */;
+			remoteGlobalIDString = 8DD76F620486A84900D96B5E;
 			remoteInfo = Main;
 		};
 		63FF12FF157966F800F92457 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 63786F391579661400A6B827 /* Worker */;
+			remoteGlobalIDString = 63786F391579661400A6B827;
 			remoteInfo = Worker;
 		};
 /* End PBXContainerItemProxy section */
@@ -73,7 +73,6 @@
 		63786F1B1579656700A6B827 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = SOURCE_ROOT; };
 		63786F1D1579657000A6B827 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = worker.cpp; path = ../worker.cpp; sourceTree = SOURCE_ROOT; };
 		63786F2B157965D700A6B827 /* main */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = main; sourceTree = BUILT_PRODUCTS_DIR; };
-		63786F33157965E800A6B827 /* Worker-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Worker-Info.plist"; sourceTree = "<group>"; };
 		63786F421579661400A6B827 /* worker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = worker; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -100,7 +99,6 @@
 			children = (
 				08FB7795FE84155DC02AAC07 /* Source */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
-				63786F33157965E800A6B827 /* Worker-Info.plist */,
 			);
 			name = ProcessPool;
 			sourceTree = "<group>";
