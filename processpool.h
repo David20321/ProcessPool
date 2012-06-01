@@ -65,6 +65,9 @@ private:
 
 class ProcessPool {
 public:
+    // Change number of process handlers
+    void Resize(int _size);
+    
     typedef int (*JobFunctionPtr)(int argc, const char* argv[]);
     typedef std::map<std::string, ProcessPool::JobFunctionPtr> JobMap;
     enum Error{SUCCESS = 0,
@@ -75,11 +78,9 @@ public:
 
     void NotifyTaskComplete();
     void Schedule(const std::string& task);
-    ProcessPool(int size);
+    ProcessPool(int size=0);
     ~ProcessPool();
 private:
-    // Change number of process handlers
-    void Resize(int _size);
     
     // Attempts to start processing the first task in the queue in the first
     // idle process. Can return SUCCESS, NO_IDLE_PROCESS or NO_TASK_IN_QUEUE. 

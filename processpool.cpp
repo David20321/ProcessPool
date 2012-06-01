@@ -200,7 +200,7 @@ void ReadMessageFromPipe(int pipe_handle, std::string *msg){
     bool continue_reading = true;
     while(continue_reading){
         bytes_read = read(pipe_handle, buf, 1);
-        if(bytes_read < 0){
+        if(bytes_read <= 0){
             exit(1); // Other process was probably killed
         }
         if(buf[0] == '\0'){
@@ -479,12 +479,14 @@ int ChildProcessMessage(const std::string& msg, const ProcessPool::JobMap &job_m
             }
             if(quote_start != -1 && quote_end != -1){
                 params_separated.push_back(params.substr(quote_start+1, quote_end-quote_start-1));
-                params = params.substr(space + 1, params.size()-(space+1));                
             } else if(space == std::string::npos){
                 params_separated.push_back(params);
-                params.clear();
             } else {
                 params_separated.push_back(params.substr(0, space));
+            }
+            if(space == std::string::npos){
+                params.clear();
+            } else {
                 params = params.substr(space + 1, params.size()-(space+1));
             }
         }
