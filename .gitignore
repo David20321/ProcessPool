@@ -1,20 +1,5 @@
 
 .DS_Store
 
-Backup/README.md
-
-Backup/disallow_copy_and_assign.h
-
-Backup/processpool.cpp
-
-Backup/processpool.h
-
-Backup/test.cpp
-
-XCode/ProcessPool.xcodeproj/david.mode1v3
-
-XCode/ProcessPool.xcodeproj/david.pbxuser
-
-XCode/ProcessPool.1
-
-XCode/Worker-Info.plist
+XCode/ProcessPool.xcodeproj/david.*
+XCode/build/*
