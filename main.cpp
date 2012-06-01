@@ -4,8 +4,14 @@
 
 using namespace std;
 
+#ifdef _WIN32
+    const char *worker_app = "worker.exe";
+#else 
+    const char *worker_app = "worker";
+#endif
+
 int main(int argc, char* argv[]){
-    ProcessPool process_pool("worker.exe", 4);
+    ProcessPool process_pool(worker_app, 4);
     process_pool.Schedule("CreateFile \"the_file.txt\"");
     process_pool.Schedule("CreateFile \"the_      file.txt\"");
     process_pool.Schedule("CreateFile \"the_file.txt\" \"Other file.txt\" param1 param2");

@@ -64,7 +64,9 @@ ProcessPool::Error ProcessPool::ProcessFirstTaskInQueue() {
         }
         return ProcessPool::NO_TASK_IN_QUEUE;
     } else {
+#ifdef _WIN32
         ResetEvent(idle_event_);
+#endif
     }
     int idle_process = GetIdleProcessIndex();
     if(idle_process == -1){
@@ -357,7 +359,7 @@ OSProcess::~OSProcess() {
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
-OSProcess::OSProcess() {
+OSProcess::OSProcess(const std::string& worker_path) {
     std::cout << "Creating OS Process" << std::endl;
     
     int pipe_in[2], pipe_out[2];
@@ -367,6 +369,37 @@ OSProcess::OSProcess() {
     if(pipe(pipe_out) == -1){
         ErrorExit("Error creating second pipe");
     }
+    
+#ifdef __APPLE__
+    std::string path;
+    {
+        char path_buf[1024];
+        uint32_t size = sizeof(path_buf);
+        if(_NSGetExecutablePath(path_buf, &size) == 0){
+            path = path_buf;
+        } else {
+            ErrorExit("Could not get application path");
+        }
+    }
+#else
+	std::string path;
+    char buf[1024];
+    ssize_t len = ::readlink("/proc/self/exe", buf, sizeof(buf)-1);
+    if (len != -1) {
+        buf[len] = '\0';
+        path = buf;
+    } else {
+        ErrorExit("Could not get application path");
+    }
+#endif 
+    int last_slash = path.rfind('/');
+    if(last_slash == std::string::npos){
+        path.clear();
+    } else {
+        path = path.substr(0,last_slash+1);
+    }
+    path += worker_path;
+    
     
     int pid = fork();
     if(pid == 0){
@@ -391,29 +424,7 @@ OSProcess::OSProcess() {
         if(close(pipe_out[1]) == -1){
             ErrorExit("Error closing pipe d");
         }
-        
-#ifdef __APPLE__
-        std::string path;
-        {
-            char path_buf[1024];
-            uint32_t size = sizeof(path_buf);
-            if(_NSGetExecutablePath(path_buf, &size) == 0){
-                path = path_buf;
-            } else {
-                ErrorExit("Could not get application path");
-            }
-        }
-#else
-	std::string path;
-        char buf[1024];
-        ssize_t len = ::readlink("/proc/self/exe", buf, sizeof(buf)-1);
-        if (len != -1) {
-            buf[len] = '\0';
-            path = buf;
-        } else {
-            ErrorExit("Could not get application path");
-        }
-#endif        
+               
         std::vector<char*> args;
         args.push_back((char*)path.c_str());
         args.push_back((char*)kWorkerProcessString);
@@ -444,10 +455,10 @@ OSProcess::OSProcess() {
 #include <signal.h>
 OSProcess::~OSProcess() {
     kill(process_info_, SIGKILL);
-    if(close(read_pipe_[0]) == -1){
+    if(close(read_pipe_) == -1){
         ErrorExit("Error closing pipe e");
     }
-    if(close(write_pipe_[1]) == -1){
+    if(close(write_pipe_) == -1){
         ErrorExit("Error closing pipe f");
     }
 }
