@@ -34,7 +34,7 @@ void ProcessPool::Resize( int _size ) {
     }
     processes_.resize(_size, NULL);
     for(int i=old_size; i<_size; ++i){
-        processes_[i] = new ProcessHandle(this);
+        processes_[i] = new ProcessHandle(worker_path_, this);
     }
 }
 
@@ -50,7 +50,21 @@ int ProcessPool::GetIdleProcessIndex() {
 
 ProcessPool::Error ProcessPool::ProcessFirstTaskInQueue() {
     if(tasks_.empty()){
+        int num_processes = (int)processes_.size();
+        int num_idle = 0;
+        for(int i=0; i<processes_.size(); ++i){
+            if(processes_[i]->idle()){
+                ++num_idle;
+            }
+        }
+        if(num_idle == num_processes){
+            #ifdef _WIN32
+                SetEvent(idle_event_);
+            #endif
+        }
         return ProcessPool::NO_TASK_IN_QUEUE;
+    } else {
+        ResetEvent(idle_event_);
     }
     int idle_process = GetIdleProcessIndex();
     if(idle_process == -1){
@@ -65,17 +79,24 @@ bool ProcessPool::AmIAWorkerProcess( int argc, char* argv[] ) {
     return (argc >= 2 && strcmp(argv[1],kWorkerProcessString) == 0);
 }
 
-ProcessPool::ProcessPool( int size ) {
-#ifdef _WIN32
-    mutex_ = CreateMutex(NULL, false, NULL);
-#else
-    pthread_mutex_init(&mutex_, NULL);
-#endif    
+ProcessPool::ProcessPool( const std::string &worker_path, int size ):
+    worker_path_(worker_path)
+{
+    #ifdef _WIN32
+        mutex_ = CreateMutex(NULL, false, NULL);
+        idle_event_ = CreateEvent(NULL, true, true, NULL);
+    #else
+        pthread_mutex_init(&mutex_, NULL);
+    #endif    
     Resize(size);
 }
 
 ProcessPool::~ProcessPool() {
     Resize(0);
+    #ifdef _WIN32
+        CloseHandle(mutex_);
+        CloseHandle(idle_event_);
+    #endif
 }
 
 void ProcessPool::Schedule( const std::string& task ) {
@@ -99,8 +120,8 @@ void ProcessPool::Schedule( const std::string& task ) {
 #endif                   
 }
 
-ProcessHandle::ProcessHandle(ProcessPool* parent_process_pool)
-    :idle_(true), parent_process_pool_(parent_process_pool)
+ProcessHandle::ProcessHandle( const std::string &worker_path, ProcessPool* parent_process_pool )
+    :os_process_(worker_path), idle_(true), parent_process_pool_(parent_process_pool)
 {}
 
 bool ProcessHandle::ProcessMessageFromChild(const std::string& msg){
@@ -257,10 +278,23 @@ std::string OSProcess::WaitForChildMessage() {
 }
 
 #ifdef _WIN32
-OSProcess::OSProcess() {
+OSProcess::OSProcess(const std::string &worker_path) {
     std::cout << "Creating OS Process" << std::endl;
     wchar_t path_utf16_buf[kPathBufferSize];
     GetModuleFileNameW( NULL, path_utf16_buf, kPathBufferSize);
+    int last_slash_pos = -1;
+    for(int i=0; i<kPathBufferSize; ++i){
+        if(path_utf16_buf[i] == '\\'){
+            path_utf16_buf[i] = '/';
+            last_slash_pos = i;
+        } else if(path_utf16_buf[i] == '\0'){
+            break;
+        }          
+    }
+    
+    if(!MultiByteToWideChar(CP_UTF8, 0, worker_path.c_str(), -1, &path_utf16_buf[last_slash_pos+1], kPathBufferSize-(last_slash_pos+1))){
+        ErrorExit("Error converting worker path utf8 string to utf16: " + worker_path);
+    }
 
     // This uses UTF16 for the first arg and UTF8 for subsequent args
     std::wstring param; 
@@ -297,12 +331,15 @@ OSProcess::OSProcess() {
         ErrorExit("Error setting inherit properties of second child process pipe");
     }
 
-    CreateProcessW(path_utf16_buf, 
-        &param[0], 
-        NULL, NULL, true, 
-        NORMAL_PRIORITY_CLASS,
-        NULL, NULL, &startup_info,
-        &process_info_);
+    if(!CreateProcessW(path_utf16_buf, 
+            &param[0], 
+            NULL, NULL, true, 
+            NORMAL_PRIORITY_CLASS,
+            NULL, NULL, &startup_info,
+            &process_info_))
+    {
+        ErrorExit("Could not open process: "+worker_path);
+    }
         
     if(WaitForChildMessage() != kChildInitString){
         ErrorExit("Invalid initial acknowledgement from child process");
@@ -407,6 +444,12 @@ OSProcess::OSProcess() {
 #include <signal.h>
 OSProcess::~OSProcess() {
     kill(process_info_, SIGKILL);
+    if(close(read_pipe_[0]) == -1){
+        ErrorExit("Error closing pipe e");
+    }
+    if(close(write_pipe_[1]) == -1){
+        ErrorExit("Error closing pipe f");
+    }
 }
 #endif
 
@@ -577,4 +620,10 @@ void ProcessPool::NotifyTaskComplete() {
         ErrorExit("Error releasing mutex");
     }
 #endif        
+}
+
+void ProcessPool::WaitForTasksToComplete() {
+    #ifdef _WIN32
+        WaitForSingleObject(idle_event_, INFINITE);
+    #endif
 }

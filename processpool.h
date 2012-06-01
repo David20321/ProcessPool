@@ -12,7 +12,7 @@
 #include <windows.h>
 class OSProcess {
     public:
-        OSProcess();
+        OSProcess(const std::string &worker_path);
         ~OSProcess();
         
         std::string WaitForChildMessage();
@@ -29,7 +29,7 @@ class OSProcess {
 #include <unistd.h>
 class OSProcess {
 public:
-    OSProcess();
+    OSProcess(const std::string &worker_path);
     ~OSProcess();
     
     std::string WaitForChildMessage();
@@ -50,14 +50,13 @@ public:
     inline bool idle(){return idle_;}
     void ProcessInBackground();
     
-    ProcessHandle(ProcessPool* parent_process_pool);
+    ProcessHandle(const std::string &worker_path, ProcessPool* parent_process_pool);
    
 private:
     bool idle_;
     OSProcess os_process_;
     ProcessPool* parent_process_pool_;
     
-    void CreateProcess();
     bool ProcessMessageFromChild(const std::string& msg);
     DISALLOW_COPY_AND_ASSIGN(ProcessHandle);
 };
@@ -78,7 +77,8 @@ public:
 
     void NotifyTaskComplete();
     void Schedule(const std::string& task);
-    ProcessPool(int size=0);
+    void WaitForTasksToComplete();
+    ProcessPool(const std::string &worker_path, int size=0);
     ~ProcessPool();
 private:
     
@@ -90,10 +90,12 @@ private:
     // are no idle processes
     int GetIdleProcessIndex();
     
+    std::string worker_path_;
     std::vector<ProcessHandle*> processes_;
     std::queue<std::string> tasks_;
 #ifdef _WIN32
     HANDLE mutex_;
+    HANDLE idle_event_;
 #else
     pthread_mutex_t mutex_;
 #endif
