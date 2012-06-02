@@ -1,11 +1,15 @@
-objects = processpool.o test.o
+objects = processpool.o
 
-test : $(objects)
-	gcc -o test $(objects) -lstdc++ -lpthread
+all : main worker
+
+main : $(objects)
+	gcc -o main main.cpp $(objects) -lstdc++ -lpthread
+
+worker : $(objects)
+	gcc -o worker worker.cpp $(objects) -lstdc++ -lpthread
 
 processpool.o : processpool.h disallow_copy_and_assign.h
-test.o : processpool.h disallow_copy_and_assign.h
 
 .PHONY : clean
 clean :
-	rm test $(objects)
+	rm main worker $(objects)
