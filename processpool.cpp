@@ -326,8 +326,10 @@ OSProcess::OSProcess(const std::string &worker_path) {
 
     // This uses UTF16 for the first arg and UTF8 for subsequent args
     std::wstring param; 
-    param.reserve(kPathBufferSize);
-    param += path_utf16_buf;
+	param.reserve(kPathBufferSize);
+	param += '\"';
+	param += path_utf16_buf;
+	param += '\"';
     param += L" ";
     param += WStrFromCStr(kWorkerProcessString);
 
